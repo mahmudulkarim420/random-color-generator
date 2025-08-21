@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Random Colors on Boxes</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+  <main class="w-full max-w-5xl">
+    <h1 class="text-2xl md:text-3xl font-bold text-center mb-6">Random Color Boxes (DOM + Tailwind)</h1>
+
+    <div id="boxWrap" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div class="box h-36 rounded-2xl shadow-lg flex items-center justify-center font-semibold text-lg tracking-wide select-none"></div>
+      <div class="box h-36 rounded-2xl shadow-lg flex items-center justify-center font-semibold text-lg tracking-wide select-none"></div>
+      <div class="box h-36 rounded-2xl shadow-lg flex items-center justify-center font-semibold text-lg tracking-wide select-none"></div>
+      <div class="box h-36 rounded-2xl shadow-lg flex items-center justify-center font-semibold text-lg tracking-wide select-none"></div>
+      <div class="box h-36 rounded-2xl shadow-lg flex items-center justify-center font-semibold text-lg tracking-wide select-none"></div>
+    </div>
+
+    <div class="mt-6 flex items-center gap-3 justify-center">
+      <button id="regen" class="px-4 py-2 rounded-xl shadow-md border bg-white hover:bg-gray-50 active:scale-[0.98] transition">
+        Re-generate Colors
+      </button>
+    </div>
+  </main>
+
+  <script>
+    const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+    const randomHSL = () => {
+      const h = rand(0, 360);
+      const s = rand(65, 95);
+      const l = rand(40, 60);
+      return `hsl(${h} ${s}% ${l}%)`;
+    };
+
+    const randomBackground = () => {
+      const mode = Math.random() < 0.5 ? 'solid' : 'gradient';
+      if (mode === 'solid') {
+        return randomHSL();
+      } else {
+        const c1 = randomHSL();
+        const c2 = randomHSL();
+        const angle = rand(15, 165);
+        return `linear-gradient(${angle}deg, ${c1}, ${c2})`;
+      }
+    };
+
+    const pickTextColorForBg = (bg) => {
+      const match = bg.match(/hsl\((\d+)\s+(\d+)%\s+(\d+)%\)/);
+      let l = 50;
+      if (match) {
+        l = parseInt(match[3], 10);
+      }
+      return l > 60 ? '#111111' : '#ffffff';
+    };
+
+    function paintBoxes() {
+      const boxes = document.querySelectorAll('.box');
+      boxes.forEach((box, i) => {
+        const bg = randomBackground();
+        const text = pickTextColorForBg(bg);
+        box.style.background = bg;
+        box.style.color = text;
+        box.classList.add('border', 'border-white/20', 'backdrop-blur-0');
+        box.textContent = `Box ${i + 1}`;
+        box.style.boxShadow = '0 10px 20px rgba(0,0,0,.12), 0 6px 6px rgba(0,0,0,.08)';
+      });
+    }
+
+    paintBoxes();
+    document.getElementById('regen').addEventListener('click', paintBoxes);
+  </script>
+</body>
+</html>
