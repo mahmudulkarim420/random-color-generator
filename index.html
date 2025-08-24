@@ -11,11 +11,11 @@
     <h1 class="text-2xl md:text-3xl font-bold text-center mb-6">Random Color Boxes (DOM + Tailwind)</h1>
 
     <div id="boxWrap" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-      <div class="box h-36 rounded-2xl shadow-lg flex items-center justify-center font-semibold text-lg tracking-wide select-none"></div>
-      <div class="box h-36 rounded-2xl shadow-lg flex items-center justify-center font-semibold text-lg tracking-wide select-none"></div>
-      <div class="box h-36 rounded-2xl shadow-lg flex items-center justify-center font-semibold text-lg tracking-wide select-none"></div>
-      <div class="box h-36 rounded-2xl shadow-lg flex items-center justify-center font-semibold text-lg tracking-wide select-none"></div>
-      <div class="box h-36 rounded-2xl shadow-lg flex items-center justify-center font-semibold text-lg tracking-wide select-none"></div>
+      <div class="box h-44 rounded-2xl shadow-lg flex flex-col items-center justify-center font-semibold text-lg tracking-wide select-none p-2"></div>
+      <div class="box h-44 rounded-2xl shadow-lg flex flex-col items-center justify-center font-semibold text-lg tracking-wide select-none p-2"></div>
+      <div class="box h-44 rounded-2xl shadow-lg flex flex-col items-center justify-center font-semibold text-lg tracking-wide select-none p-2"></div>
+      <div class="box h-44 rounded-2xl shadow-lg flex flex-col items-center justify-center font-semibold text-lg tracking-wide select-none p-2"></div>
+      <div class="box h-44 rounded-2xl shadow-lg flex flex-col items-center justify-center font-semibold text-lg tracking-wide select-none p-2"></div>
     </div>
 
     <div class="mt-6 flex items-center gap-3 justify-center">
@@ -33,6 +33,26 @@
       const s = rand(65, 95);
       const l = rand(40, 60);
       return `hsl(${h} ${s}% ${l}%)`;
+    };
+
+    // HSL to RGBA
+    const hslToRgba = (h, s, l) => {
+      s /= 100;
+      l /= 100;
+      const c = (1 - Math.abs(2 * l - 1)) * s;
+      const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+      const m = l - c / 2;
+      let r = 0, g = 0, b = 0;
+      if (h < 60) { r = c; g = x; b = 0; }
+      else if (h < 120) { r = x; g = c; b = 0; }
+      else if (h < 180) { r = 0; g = c; b = x; }
+      else if (h < 240) { r = 0; g = x; b = c; }
+      else if (h < 300) { r = x; g = 0; b = c; }
+      else { r = c; g = 0; b = x; }
+      r = Math.round((r + m) * 255);
+      g = Math.round((g + m) * 255);
+      b = Math.round((b + m) * 255);
+      return `rgba(${r}, ${g}, ${b}, 1)`;
     };
 
     const randomBackground = () => {
@@ -64,8 +84,44 @@
         box.style.background = bg;
         box.style.color = text;
         box.classList.add('border', 'border-white/20', 'backdrop-blur-0');
-        box.textContent = `Box ${i + 1}`;
+        box.innerHTML = `
+          <span>Box ${i + 1}</span>
+          <div class="mt-2 text-xs text-center space-y-1" id="codes-${i}"></div>
+        `;
         box.style.boxShadow = '0 10px 20px rgba(0,0,0,.12), 0 6px 6px rgba(0,0,0,.08)';
+
+        const codesEl = document.getElementById(`codes-${i}`);
+
+        // Solid হলে ১টা RGBA
+        const match = bg.match(/hsl\((\d+)\s+(\d+)%\s+(\d+)%\)/);
+        if (match) {
+          const rgba = hslToRgba(+match[1], +match[2], +match[3]);
+          codesEl.innerHTML = `<span class="bg-black/20 px-2 py-1 rounded cursor-pointer inline-block">${rgba}</span>`;
+          codesEl.firstChild.addEventListener("click", () => {
+            navigator.clipboard.writeText(rgba);
+            codesEl.firstChild.textContent = "Copied!";
+            setTimeout(() => codesEl.firstChild.textContent = rgba, 1000);
+          });
+        } else {
+          // Gradient হলে দুটো আলাদা কালার বের করা
+          const colors = [...bg.matchAll(/hsl\((\d+)\s+(\d+)%\s+(\d+)%\)/g)];
+          let html = "";
+          colors.forEach((c, idx) => {
+            const rgba = hslToRgba(+c[1], +c[2], +c[3]);
+            html += `<span class="bg-black/20 px-2 py-1 rounded cursor-pointer inline-block mx-1" id="grad-${i}-${idx}">${rgba}</span>`;
+          });
+          codesEl.innerHTML = html;
+
+          colors.forEach((c, idx) => {
+            const rgba = hslToRgba(+c[1], +c[2], +c[3]);
+            const el = document.getElementById(`grad-${i}-${idx}`);
+            el.addEventListener("click", () => {
+              navigator.clipboard.writeText(rgba);
+              el.textContent = "Copied!";
+              setTimeout(() => el.textContent = rgba, 1000);
+            });
+          });
+        }
       });
     }
 
